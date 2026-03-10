@@ -1,7 +1,16 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, Notification, nativeImage } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, Notification, nativeImage, dialog } = require('electron');
 const path = require('path');
 const zlib = require('zlib');
 const store = require('./store');
+
+// Catch uncaught errors so we can see what's crashing
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err);
+  dialog.showErrorBox('Teams Launcher Error', err.stack || err.message || String(err));
+});
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION:', err);
+});
 
 // Keep references to prevent garbage collection
 let tray = null;
@@ -343,23 +352,30 @@ app.on('window-all-closed', (e) => {
 });
 
 app.whenReady().then(() => {
-  // Hide dock icon on macOS
-  if (app.dock) {
-    app.dock.hide();
-  }
+  try {
+    // Hide dock icon on macOS
+    if (app.dock) {
+      app.dock.hide();
+    }
 
-  tray = new Tray(createTrayIcon());
-  tray.setToolTip('Teams Launcher');
-  tray.setContextMenu(buildTrayMenu());
+    console.log('Creating tray icon...');
+    tray = new Tray(createTrayIcon());
+    tray.setToolTip('Teams Launcher');
+    tray.setContextMenu(buildTrayMenu());
+    console.log('Tray created successfully');
 
-  // Trigger macOS notification permission on first launch
-  const accounts = store.getAccounts();
-  if (accounts.length === 0) {
-    const welcome = new Notification({
-      title: 'Teams Launcher is running',
-      body: 'Click the menu bar icon to add your Teams accounts.'
-    });
-    welcome.show();
+    // Trigger macOS notification permission on first launch
+    const accounts = store.getAccounts();
+    if (accounts.length === 0) {
+      const welcome = new Notification({
+        title: 'Teams Launcher is running',
+        body: 'Click the menu bar icon to add your Teams accounts.'
+      });
+      welcome.show();
+    }
+  } catch (err) {
+    console.error('STARTUP ERROR:', err);
+    dialog.showErrorBox('Teams Launcher Startup Error', err.stack || err.message);
   }
 });
 
