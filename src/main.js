@@ -282,14 +282,43 @@ function launchAccount(accountId) {
     callback(allowed);
   });
 
-  // Intercept link opens — Microsoft URLs go to account's browser, others to default browser
+  // Intercept ALL new windows — route to tabbed browser or external browser
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (isMicrosoftUrl(url)) {
-      openInBrowser(url, account);
-    } else {
-      shell.openExternal(url);
+    if (url && url !== 'about:blank') {
+      if (isMicrosoftUrl(url)) {
+        openInBrowser(url, account);
+      } else {
+        shell.openExternal(url);
+      }
+      return { action: 'deny' };
     }
-    return { action: 'deny' };
+    // Allow about:blank popups (Teams uses these then navigates)
+    return { action: 'allow' };
+  });
+
+  // Catch child windows that Teams creates (about:blank then navigates)
+  win.webContents.on('did-create-window', (childWin) => {
+    const childUrl = childWin.webContents.getURL();
+    // Close the child immediately and open in our browser instead
+    childWin.webContents.once('did-navigate', (e, url) => {
+      if (url && url !== 'about:blank') {
+        childWin.close();
+        if (isMicrosoftUrl(url)) {
+          openInBrowser(url, account);
+        } else {
+          shell.openExternal(url);
+        }
+      }
+    });
+    // Also handle if it already has a URL
+    if (childUrl && childUrl !== 'about:blank') {
+      childWin.close();
+      if (isMicrosoftUrl(childUrl)) {
+        openInBrowser(childUrl, account);
+      } else {
+        shell.openExternal(childUrl);
+      }
+    }
   });
 
   win.loadURL('https://teams.microsoft.com');
