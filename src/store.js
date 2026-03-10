@@ -3,18 +3,25 @@ const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
-const storePath = path.join(app.getPath('userData'), 'accounts.json');
+// Lazy init — app.getPath() only works after app is ready
+let storePath = null;
+function getStorePath() {
+  if (!storePath) {
+    storePath = path.join(app.getPath('userData'), 'accounts.json');
+  }
+  return storePath;
+}
 
 function readStore() {
   try {
-    return JSON.parse(fs.readFileSync(storePath, 'utf-8'));
+    return JSON.parse(fs.readFileSync(getStorePath(), 'utf-8'));
   } catch {
     return [];
   }
 }
 
 function writeStore(accounts) {
-  fs.writeFileSync(storePath, JSON.stringify(accounts, null, 2), 'utf-8');
+  fs.writeFileSync(getStorePath(), JSON.stringify(accounts, null, 2), 'utf-8');
 }
 
 function getAccounts() {
