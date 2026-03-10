@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Tray, Menu, ipcMain, Notification, nativeImage } = require('electron');
 const path = require('path');
+const zlib = require('zlib');
 const store = require('./store');
 
 // Keep references to prevent garbage collection
@@ -10,29 +11,98 @@ const teamsWindows = new Map(); // accountId -> BrowserWindow
 // Chrome user agent to avoid Teams blocking Electron's default UA
 const CHROME_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
+// --- PNG Generation (Electron nativeImage doesn't support SVG) ---
+
+// CRC32 lookup table
+const crcTable = (() => {
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) {
+      c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    }
+    table[n] = c;
+  }
+  return table;
+})();
+
+function crc32(buf) {
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < buf.length; i++) {
+    crc = crcTable[(crc ^ buf[i]) & 0xFF] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function pngChunk(type, data) {
+  const typeBuf = Buffer.from(type, 'ascii');
+  const lenBuf = Buffer.alloc(4);
+  lenBuf.writeUInt32BE(data.length);
+  const crcBuf = Buffer.alloc(4);
+  crcBuf.writeUInt32BE(crc32(Buffer.concat([typeBuf, data])));
+  return Buffer.concat([lenBuf, typeBuf, data, crcBuf]);
+}
+
+function createPng(width, height, pixelFn) {
+  // Build raw RGBA rows with filter byte (0 = None)
+  const raw = Buffer.alloc((width * 4 + 1) * height);
+  for (let y = 0; y < height; y++) {
+    raw[y * (width * 4 + 1)] = 0; // filter: none
+    for (let x = 0; x < width; x++) {
+      const [r, g, b, a] = pixelFn(x, y);
+      const off = y * (width * 4 + 1) + 1 + x * 4;
+      raw[off] = r; raw[off + 1] = g; raw[off + 2] = b; raw[off + 3] = a;
+    }
+  }
+
+  const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8;  // bit depth
+  ihdr[9] = 6;  // color type: RGBA
+  ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
+
+  const compressed = zlib.deflateSync(raw);
+
+  return Buffer.concat([
+    signature,
+    pngChunk('IHDR', ihdr),
+    pngChunk('IDAT', compressed),
+    pngChunk('IEND', Buffer.alloc(0))
+  ]);
+}
+
 // --- Tray Icon ---
 
 function createTrayIcon() {
-  // 16x16 template image: simple "T" icon
-  const canvas = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-      <rect x="2" y="3" width="12" height="2" fill="black"/>
-      <rect x="7" y="3" width="2" height="10" fill="black"/>
-    </svg>
-  `;
-  const base64 = Buffer.from(canvas.trim()).toString('base64');
-  const image = nativeImage.createFromDataURL(`data:image/svg+xml;base64,${base64}`);
+  // 16x16 "T" icon — black on transparent, used as macOS template image
+  const png = createPng(16, 16, (x, y) => {
+    const topBar = y >= 3 && y <= 4 && x >= 2 && x <= 13;
+    const stem = y >= 5 && y <= 12 && x >= 6 && x <= 9;
+    if (topBar || stem) return [0, 0, 0, 255];
+    return [0, 0, 0, 0];
+  });
+  const image = nativeImage.createFromBuffer(png);
   image.setTemplateImage(true);
   return image;
 }
 
-function createColorDot(hex) {
-  const svg = `<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="8" cy="8" r="6" fill="${hex}"/>
-  </svg>`;
-  return nativeImage.createFromDataURL(
-    `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
-  );
+function createColorDot(hexColor) {
+  // Parse hex color
+  const hex = hexColor.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  // 16x16 filled circle
+  const png = createPng(16, 16, (x, y) => {
+    const dx = x - 7.5, dy = y - 7.5;
+    if (dx * dx + dy * dy <= 36) return [r, g, b, 255];
+    return [0, 0, 0, 0];
+  });
+  return nativeImage.createFromBuffer(png);
 }
 
 // --- Tray Menu ---
