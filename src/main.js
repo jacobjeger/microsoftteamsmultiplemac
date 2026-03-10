@@ -284,7 +284,8 @@ function launchAccount(accountId) {
 
   // Intercept ALL new windows — route to tabbed browser or external browser
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url && url !== 'about:blank') {
+    // If we already have a real URL, just handle it directly
+    if (url && url !== 'about:blank' && url !== '') {
       if (isMicrosoftUrl(url)) {
         openInBrowser(url, account);
       } else {
@@ -292,33 +293,46 @@ function launchAccount(accountId) {
       }
       return { action: 'deny' };
     }
-    // Allow about:blank popups (Teams uses these then navigates)
-    return { action: 'allow' };
+    // Allow about:blank — Teams opens these then navigates via JS
+    return { action: 'allow', overrideBrowserWindowOptions: { show: false } };
   });
 
-  // Catch child windows that Teams creates (about:blank then navigates)
+  // Catch child windows Teams creates (about:blank then navigates via JS)
   win.webContents.on('did-create-window', (childWin) => {
-    const childUrl = childWin.webContents.getURL();
-    // Close the child immediately and open in our browser instead
-    childWin.webContents.once('did-navigate', (e, url) => {
-      if (url && url !== 'about:blank') {
-        childWin.close();
-        if (isMicrosoftUrl(url)) {
-          openInBrowser(url, account);
-        } else {
-          shell.openExternal(url);
-        }
-      }
-    });
-    // Also handle if it already has a URL
-    if (childUrl && childUrl !== 'about:blank') {
-      childWin.close();
-      if (isMicrosoftUrl(childUrl)) {
-        openInBrowser(childUrl, account);
+    function redirectChild(url) {
+      if (!url || url === 'about:blank' || url === '') return;
+      if (!childWin.isDestroyed()) childWin.destroy();
+      if (isMicrosoftUrl(url)) {
+        openInBrowser(url, account);
       } else {
-        shell.openExternal(childUrl);
+        shell.openExternal(url);
       }
     }
+
+    // Listen for navigation on the child
+    childWin.webContents.on('will-navigate', (e, url) => {
+      e.preventDefault();
+      redirectChild(url);
+    });
+
+    childWin.webContents.on('did-navigate', (e, url) => {
+      redirectChild(url);
+    });
+
+    childWin.webContents.on('will-redirect', (e, url) => {
+      e.preventDefault();
+      redirectChild(url);
+    });
+
+    // Fallback: check after a short delay in case none of the above fired
+    setTimeout(() => {
+      if (!childWin.isDestroyed()) {
+        const url = childWin.webContents.getURL();
+        if (url && url !== 'about:blank') {
+          redirectChild(url);
+        }
+      }
+    }, 2000);
   });
 
   win.loadURL('https://teams.microsoft.com');
