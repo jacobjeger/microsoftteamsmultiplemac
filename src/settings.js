@@ -15,6 +15,7 @@ let draggedId = null;
 
 const accountList = document.getElementById('account-list');
 const addBtn = document.getElementById('add-account');
+const launchAllBtn = document.getElementById('launch-all');
 const modalOverlay = document.getElementById('modal-overlay');
 const modalTitle = document.getElementById('modal-title');
 const accountNameInput = document.getElementById('account-name');
@@ -38,6 +39,8 @@ async function init() {
 // --- Render Accounts ---
 
 function renderAccounts() {
+  launchAllBtn.disabled = accounts.length === 0;
+
   if (accounts.length === 0) {
     accountList.innerHTML = '<div class="empty-state">No accounts yet. Click "+ Add Account" to get started.</div>';
     return;
@@ -182,6 +185,11 @@ async function deleteAccount(account) {
 // --- Event Listeners ---
 
 addBtn.addEventListener('click', () => openModal());
+launchAllBtn.addEventListener('click', () => {
+  for (const account of accounts) {
+    window.api.launchAccount(account.id);
+  }
+});
 modalCancel.addEventListener('click', closeModal);
 modalSave.addEventListener('click', saveModal);
 

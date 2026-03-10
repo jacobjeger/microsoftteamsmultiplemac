@@ -250,17 +250,25 @@ function launchAccount(accountId) {
 
 function openSettings() {
   if (settingsWindow && !settingsWindow.isDestroyed()) {
+    settingsWindow.show();
     settingsWindow.focus();
     return;
   }
 
+  // Show dock icon while settings window is open
+  if (app.dock) {
+    app.dock.show();
+  }
+
   settingsWindow = new BrowserWindow({
-    width: 480,
-    height: 560,
+    width: 520,
+    height: 600,
     resizable: true,
-    minimizable: false,
+    minimizable: true,
     maximizable: false,
-    title: 'Teams Launcher Settings',
+    title: 'Teams Launcher',
+    titleBarStyle: 'hiddenInset',
+    backgroundColor: '#1e1e1e',
     webPreferences: {
       preload: path.join(__dirname, 'preload-settings.js'),
       contextIsolation: true,
@@ -272,6 +280,11 @@ function openSettings() {
 
   settingsWindow.on('closed', () => {
     settingsWindow = null;
+    // Hide dock icon again when settings closes (if no Teams windows visible)
+    const anyVisible = [...teamsWindows.values()].some(w => !w.isDestroyed() && w.isVisible());
+    if (app.dock && !anyVisible) {
+      app.dock.hide();
+    }
   });
 }
 
@@ -362,7 +375,16 @@ app.whenReady().then(() => {
     tray = new Tray(createTrayIcon());
     tray.setToolTip('Teams Launcher');
     tray.setContextMenu(buildTrayMenu());
+
+    // Left-click tray icon opens Settings window
+    tray.on('click', () => {
+      openSettings();
+    });
+
     console.log('Tray created successfully');
+
+    // Open settings window on launch so the app feels like a regular app
+    openSettings();
 
     // Trigger macOS notification permission on first launch
     const accounts = store.getAccounts();
@@ -377,6 +399,11 @@ app.whenReady().then(() => {
     console.error('STARTUP ERROR:', err);
     dialog.showErrorBox('Teams Launcher Startup Error', err.stack || err.message);
   }
+});
+
+// Re-open settings when clicking the dock icon
+app.on('activate', () => {
+  openSettings();
 });
 
 app.on('before-quit', () => {

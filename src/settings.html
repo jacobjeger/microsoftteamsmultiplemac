@@ -7,13 +7,17 @@
   <link rel="stylesheet" href="settings.css">
 </head>
 <body>
+  <div class="titlebar-drag"></div>
   <div class="container">
     <h1>Teams Launcher</h1>
     <p class="subtitle">Manage your Teams accounts</p>
 
-    <div id="account-list"></div>
+    <div class="top-actions">
+      <button id="launch-all" class="btn btn-launch-all">Launch All</button>
+      <button id="add-account" class="btn btn-add">+ Add Account</button>
+    </div>
 
-    <button id="add-account" class="btn btn-add">+ Add Account</button>
+    <div id="account-list"></div>
   </div>
 
   <!-- Add/Edit Modal -->
