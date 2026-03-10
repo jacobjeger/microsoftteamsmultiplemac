@@ -12,6 +12,7 @@ let accounts = [];
 let editingId = null;
 let selectedColor = COLORS[0].value;
 let draggedId = null;
+let autoLaunchUrls = [];
 
 const accountList = document.getElementById('account-list');
 const addBtn = document.getElementById('add-account');
@@ -22,6 +23,9 @@ const accountNameInput = document.getElementById('account-name');
 const colorPicker = document.getElementById('color-picker');
 const modalCancel = document.getElementById('modal-cancel');
 const modalSave = document.getElementById('modal-save');
+const autoLaunchUrlsList = document.getElementById('auto-launch-urls');
+const newUrlInput = document.getElementById('new-url-input');
+const addUrlBtn = document.getElementById('add-url-btn');
 
 // --- Init ---
 
@@ -149,7 +153,9 @@ function openModal(account = null) {
   modalTitle.textContent = account ? 'Edit Account' : 'Add Account';
   accountNameInput.value = account ? account.name : '';
   selectedColor = account ? account.color : COLORS[0].value;
+  autoLaunchUrls = account && account.autoLaunchUrls ? [...account.autoLaunchUrls] : [];
   renderColorPicker();
+  renderAutoLaunchUrls();
   modalOverlay.classList.remove('hidden');
   accountNameInput.focus();
 }
@@ -164,10 +170,14 @@ async function saveModal() {
   if (!name) return;
 
   if (editingId) {
-    accounts = await window.api.updateAccount(editingId, { name, color: selectedColor });
+    accounts = await window.api.updateAccount(editingId, { name, color: selectedColor, autoLaunchUrls });
   } else {
-    await window.api.addAccount(name, selectedColor);
-    accounts = await window.api.getAccounts();
+    const account = await window.api.addAccount(name, selectedColor);
+    if (autoLaunchUrls.length > 0) {
+      accounts = await window.api.updateAccount(account.id, { autoLaunchUrls });
+    } else {
+      accounts = await window.api.getAccounts();
+    }
   }
 
   renderAccounts();
@@ -182,6 +192,38 @@ async function deleteAccount(account) {
   renderAccounts();
 }
 
+// --- Auto-Launch URLs ---
+
+function renderAutoLaunchUrls() {
+  autoLaunchUrlsList.innerHTML = '';
+  for (let i = 0; i < autoLaunchUrls.length; i++) {
+    const chip = document.createElement('div');
+    chip.className = 'url-chip';
+    const span = document.createElement('span');
+    span.textContent = autoLaunchUrls[i];
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '✕';
+    removeBtn.addEventListener('click', () => {
+      autoLaunchUrls.splice(i, 1);
+      renderAutoLaunchUrls();
+    });
+    chip.appendChild(span);
+    chip.appendChild(removeBtn);
+    autoLaunchUrlsList.appendChild(chip);
+  }
+}
+
+function addAutoLaunchUrl() {
+  let url = newUrlInput.value.trim();
+  if (!url) return;
+  if (!/^https?:\/\//i.test(url)) {
+    url = 'https://' + url;
+  }
+  autoLaunchUrls.push(url);
+  newUrlInput.value = '';
+  renderAutoLaunchUrls();
+}
+
 // --- Event Listeners ---
 
 addBtn.addEventListener('click', () => openModal());
@@ -192,6 +234,13 @@ launchAllBtn.addEventListener('click', () => {
 });
 modalCancel.addEventListener('click', closeModal);
 modalSave.addEventListener('click', saveModal);
+addUrlBtn.addEventListener('click', addAutoLaunchUrl);
+newUrlInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    addAutoLaunchUrl();
+  }
+});
 
 modalOverlay.addEventListener('click', (e) => {
   if (e.target === modalOverlay) closeModal();

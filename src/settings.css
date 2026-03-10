@@ -325,6 +325,77 @@ h1 {
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
 }
 
+/* URL List */
+.url-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.url-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #aaa;
+  font-family: -apple-system, BlinkMacSystemFont, monospace;
+}
+
+.url-chip span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.url-chip button {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.url-chip button:hover {
+  background: #3a1a1a;
+  color: #ff6b6b;
+}
+
+.url-add-row {
+  display: flex;
+  gap: 6px;
+}
+
+.url-add-row input {
+  flex: 1;
+  padding: 8px 10px;
+  background: #1a1a1a;
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 12px;
+  outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, monospace;
+}
+
+.url-add-row input:focus {
+  border-color: #4a9eff;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;

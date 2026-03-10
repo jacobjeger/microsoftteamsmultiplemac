@@ -34,7 +34,7 @@ function saveAccounts(accounts) {
 
 function addAccount(name, color) {
   const accounts = readStore();
-  const account = { id: uuidv4(), name, color };
+  const account = { id: uuidv4(), name, color, autoLaunchUrls: [] };
   accounts.push(account);
   writeStore(accounts);
   return account;

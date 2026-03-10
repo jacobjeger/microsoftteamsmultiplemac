@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, Notification, nativeImage, dialog } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, Notification, nativeImage, dialog, shell } = require('electron');
 const path = require('path');
 const zlib = require('zlib');
 const store = require('./store');
@@ -16,6 +16,7 @@ process.on('unhandledRejection', (err) => {
 let tray = null;
 let settingsWindow = null;
 const teamsWindows = new Map(); // accountId -> BrowserWindow
+const browserWindows = new Map(); // accountId -> BrowserWindow (tabbed browser)
 
 // Chrome user agent to avoid Teams blocking Electron's default UA
 const CHROME_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
@@ -176,6 +177,67 @@ function refreshTray() {
   }
 }
 
+// --- URL Helpers ---
+
+function isMicrosoftUrl(url) {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+    return hostname.endsWith('.microsoft.com') ||
+           hostname.endsWith('.microsoftonline.com') ||
+           hostname.endsWith('.sharepoint.com') ||
+           hostname.endsWith('.office.com') ||
+           hostname.endsWith('.office365.com') ||
+           hostname.endsWith('.live.com') ||
+           hostname.endsWith('.onenote.com') ||
+           hostname.endsWith('.onedrive.com');
+  } catch {
+    return false;
+  }
+}
+
+// --- Browser Window (Tabbed) ---
+
+function openInBrowser(url, account) {
+  const partition = `persist:account_${account.id}`;
+
+  if (browserWindows.has(account.id)) {
+    const existing = browserWindows.get(account.id);
+    if (!existing.isDestroyed()) {
+      existing.webContents.send('add-tab', url);
+      existing.show();
+      existing.focus();
+      return;
+    }
+  }
+
+  const win = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    title: `${account.name} Browser`,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload-browser.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      webviewTag: true
+    }
+  });
+
+  win.loadFile(path.join(__dirname, 'browser.html'), {
+    query: { partition }
+  });
+
+  // Once the browser window is ready, send the initial URL as a tab
+  win.webContents.once('did-finish-load', () => {
+    win.webContents.send('add-tab', url);
+  });
+
+  win.on('closed', () => {
+    browserWindows.delete(account.id);
+  });
+
+  browserWindows.set(account.id, win);
+}
+
 // --- Teams Windows ---
 
 function launchAccount(accountId) {
@@ -220,7 +282,24 @@ function launchAccount(accountId) {
     callback(allowed);
   });
 
+  // Intercept link opens — Microsoft URLs go to account's browser, others to default browser
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (isMicrosoftUrl(url)) {
+      openInBrowser(url, account);
+    } else {
+      shell.openExternal(url);
+    }
+    return { action: 'deny' };
+  });
+
   win.loadURL('https://teams.microsoft.com');
+
+  // Auto-launch configured URLs in the browser window
+  if (account.autoLaunchUrls && account.autoLaunchUrls.length > 0) {
+    for (const url of account.autoLaunchUrls) {
+      openInBrowser(url, account);
+    }
+  }
 
   // Hide instead of close to keep session alive in background
   win.on('close', (e) => {

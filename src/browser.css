@@ -1,0 +1,196 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #1a1a1a;
+  color: #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Toolbar */
+.toolbar {
+  flex-shrink: 0;
+  background: #222;
+  border-bottom: 1px solid #333;
+  -webkit-app-region: drag;
+}
+
+/* Tab Bar */
+.tab-bar {
+  display: flex;
+  align-items: center;
+  padding: 8px 80px 0 8px; /* 80px left padding for macOS traffic lights */
+  gap: 2px;
+  -webkit-app-region: drag;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  flex: 1;
+  -webkit-app-region: no-drag;
+}
+
+.tabs::-webkit-scrollbar {
+  height: 0;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #2a2a2a;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  max-width: 200px;
+  min-width: 60px;
+  transition: background 0.1s;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+
+.tab:hover {
+  background: #333;
+}
+
+.tab.active {
+  background: #1a1a1a;
+}
+
+.tab-title {
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  color: #aaa;
+}
+
+.tab.active .tab-title {
+  color: #e0e0e0;
+}
+
+.tab-close {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+
+.tab-close:hover {
+  background: #444;
+  color: #ff6b6b;
+}
+
+.tab-new {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+  transition: all 0.1s;
+}
+
+.tab-new:hover {
+  background: #333;
+  color: #e0e0e0;
+}
+
+/* Navigation Bar */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.1s;
+  flex-shrink: 0;
+}
+
+.nav-btn:hover {
+  background: #333;
+  color: #e0e0e0;
+}
+
+.nav-btn:disabled {
+  color: #444;
+  cursor: default;
+}
+
+.nav-btn:disabled:hover {
+  background: none;
+}
+
+.address-bar {
+  flex: 1;
+  padding: 6px 12px;
+  background: #1a1a1a;
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 13px;
+  outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, monospace;
+  transition: border-color 0.15s;
+}
+
+.address-bar:focus {
+  border-color: #4a9eff;
+}
+
+/* Webview Container */
+.webview-container {
+  flex: 1;
+  position: relative;
+}
+
+.webview-container webview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+
+.webview-container webview.active {
+  display: flex;
+}
+
+/* Loading indicator */
+.tab.loading .tab-title::before {
+  content: '⟳ ';
+}
