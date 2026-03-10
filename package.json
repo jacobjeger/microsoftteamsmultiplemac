@@ -1,0 +1,31 @@
+{
+  "name": "teams-launcher",
+  "version": "1.0.0",
+  "description": "Mac menu bar app for managing multiple Microsoft Teams accounts",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.0"
+  },
+  "build": {
+    "appId": "com.teamslauncher.app",
+    "productName": "Teams Launcher",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg",
+        "dir"
+      ]
+    },
+    "files": [
+      "src/**/*"
+    ]
+  }
+}

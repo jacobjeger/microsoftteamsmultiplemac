@@ -1,0 +1,268 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #1e1e1e;
+  color: #e0e0e0;
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+.container {
+  padding: 24px;
+  -webkit-app-region: no-drag;
+}
+
+h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 20px;
+}
+
+/* Account List */
+#account-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 16px;
+  min-height: 40px;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #2a2a2a;
+  border-radius: 8px;
+  cursor: grab;
+  transition: background 0.15s, transform 0.15s, opacity 0.15s;
+}
+
+.account-row:hover {
+  background: #333;
+}
+
+.account-row.dragging {
+  opacity: 0.4;
+  transform: scale(0.98);
+}
+
+.account-row.drag-over {
+  border-top: 2px solid #4a9eff;
+  padding-top: 8px;
+}
+
+.drag-handle {
+  cursor: grab;
+  color: #555;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.account-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-icon:hover {
+  background: #444;
+  color: #e0e0e0;
+}
+
+.btn-icon.btn-delete:hover {
+  background: #4a2020;
+  color: #ff6b6b;
+}
+
+.btn-icon.btn-launch {
+  font-size: 12px;
+}
+
+.btn-icon.btn-launch:hover {
+  background: #1a3a2a;
+  color: #4ade80;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: #666;
+  font-size: 14px;
+}
+
+/* Buttons */
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-add {
+  width: 100%;
+  background: #333;
+  color: #e0e0e0;
+}
+
+.btn-add:hover {
+  background: #444;
+}
+
+.btn-primary {
+  background: #4a9eff;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #3a8eef;
+}
+
+.btn-primary:disabled {
+  background: #333;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #333;
+  color: #e0e0e0;
+}
+
+.btn-secondary:hover {
+  background: #444;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-overlay.hidden {
+  display: none;
+}
+
+.modal {
+  background: #2a2a2a;
+  border-radius: 12px;
+  padding: 24px;
+  width: 360px;
+  max-width: 90%;
+}
+
+.modal h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px 12px;
+  background: #1e1e1e;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.form-group input:focus {
+  border-color: #4a9eff;
+}
+
+/* Color Picker */
+.color-picker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.color-swatch:hover {
+  transform: scale(1.1);
+}
+
+.color-swatch.selected {
+  border-color: #fff;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
