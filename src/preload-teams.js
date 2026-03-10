@@ -1,10 +1,24 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { ipcRenderer } = require('electron');
 
-// Get account ID from additional arguments
-const accountId = process.argv.find(a => a.startsWith('--account-id='))?.split('=')[1] || 'unknown';
+// Override the Notification API to forward to main process
+// With contextIsolation: false, this directly modifies the page's globals
+const OriginalNotification = window.Notification;
 
-// Expose notification forwarder to the page context
-// The main process injects a script that calls this function
-contextBridge.exposeInMainWorld('__teamsLauncherNotify', (title, body, id) => {
-  ipcRenderer.send('teams-notification', { title, body, accountId: id || accountId });
-});
+window.Notification = function(title, options = {}) {
+  // Forward to main process for native notification with account label
+  ipcRenderer.send('teams-notification', {
+    title: title,
+    body: options.body || ''
+  });
+
+  // Don't create the web notification — only fire the native one from main process
+  // This prevents duplicate notifications
+};
+
+// Mimic the Notification API surface so Teams doesn't show "enable notifications" banners
+window.Notification.permission = 'granted';
+window.Notification.requestPermission = async () => 'granted';
+
+if (OriginalNotification) {
+  window.Notification.maxActions = OriginalNotification.maxActions || 2;
+}

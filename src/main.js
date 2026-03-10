@@ -26,6 +26,15 @@ function createTrayIcon() {
   return image;
 }
 
+function createColorDot(hex) {
+  const svg = `<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="8" cy="8" r="6" fill="${hex}"/>
+  </svg>`;
+  return nativeImage.createFromDataURL(
+    `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
+  );
+}
+
 // --- Tray Menu ---
 
 function buildTrayMenu() {
@@ -36,10 +45,13 @@ function buildTrayMenu() {
     menuItems.push({ label: 'No accounts configured', enabled: false });
   } else {
     for (const account of accounts) {
-      const isOpen = teamsWindows.has(account.id) && !teamsWindows.get(account.id).isDestroyed();
-      const statusLabel = isOpen ? ' (open)' : '';
+      const win = teamsWindows.get(account.id);
+      const isOpen = win && !win.isDestroyed() && win.isVisible();
+      const isHidden = win && !win.isDestroyed() && !win.isVisible();
+      const statusLabel = isOpen ? ' (open)' : isHidden ? ' (background)' : '';
       menuItems.push({
-        label: `● ${account.name}${statusLabel}`,
+        label: `${account.name}${statusLabel}`,
+        icon: createColorDot(account.color),
         click: () => launchAccount(account.id)
       });
     }
@@ -88,11 +100,13 @@ function refreshTray() {
 // --- Teams Windows ---
 
 function launchAccount(accountId) {
-  // If already open, focus it
+  // If already open (visible or hidden), show and focus it
   if (teamsWindows.has(accountId)) {
     const existing = teamsWindows.get(accountId);
     if (!existing.isDestroyed()) {
+      existing.show();
       existing.focus();
+      refreshTray();
       return;
     }
   }
@@ -108,30 +122,42 @@ function launchAccount(accountId) {
     webPreferences: {
       partition: `persist:account_${account.id}`,
       preload: path.join(__dirname, 'preload-teams.js'),
-      contextIsolation: true,
+      contextIsolation: false, // allows preload to override page globals (safe: only loads teams.microsoft.com, nodeIntegration is false)
       nodeIntegration: false,
+      sandbox: false,
       additionalArguments: [`--account-id=${account.id}`]
     }
   });
 
+  // Store account info on the window for notification labeling
+  win.accountId = account.id;
+  win.accountName = account.name;
+
   win.webContents.setUserAgent(CHROME_UA);
 
-  // Inject notification override after page loads
-  win.webContents.on('did-finish-load', () => {
-    injectNotificationOverride(win, account.id);
-  });
-
-  // Also inject on navigation within Teams
-  win.webContents.on('did-navigate-in-page', () => {
-    injectNotificationOverride(win, account.id);
+  // Auto-grant notification and media permissions for Teams
+  win.webContents.session.setPermissionRequestHandler((webContents, permission, callback) => {
+    const allowed = ['notifications', 'media', 'mediaKeySystem', 'geolocation'].includes(permission);
+    callback(allowed);
   });
 
   win.loadURL('https://teams.microsoft.com');
 
+  // Hide instead of close to keep session alive in background
+  win.on('close', (e) => {
+    if (!app.isQuitting) {
+      e.preventDefault();
+      win.hide();
+      refreshTray();
+      if (settingsWindow && !settingsWindow.isDestroyed()) {
+        settingsWindow.webContents.send('accounts-changed', store.getAccounts());
+      }
+    }
+  });
+
   win.on('closed', () => {
     teamsWindows.delete(accountId);
     refreshTray();
-    // Notify settings window if open
     if (settingsWindow && !settingsWindow.isDestroyed()) {
       settingsWindow.webContents.send('accounts-changed', store.getAccounts());
     }
@@ -139,37 +165,6 @@ function launchAccount(accountId) {
 
   teamsWindows.set(accountId, win);
   refreshTray();
-}
-
-function injectNotificationOverride(win, accountId) {
-  const script = `
-    (function() {
-      if (window.__teamsLauncherNotificationPatched) return;
-      window.__teamsLauncherNotificationPatched = true;
-
-      const OriginalNotification = window.Notification;
-      const accountId = ${JSON.stringify(accountId)};
-
-      window.Notification = function(title, options) {
-        // Forward to main process via the exposed API
-        if (window.__teamsLauncherNotify) {
-          window.__teamsLauncherNotify(title, options ? options.body || '' : '', accountId);
-        }
-        return new OriginalNotification(title, options);
-      };
-
-      window.Notification.permission = OriginalNotification.permission;
-      window.Notification.requestPermission = OriginalNotification.requestPermission.bind(OriginalNotification);
-
-      // Copy static properties
-      Object.keys(OriginalNotification).forEach(key => {
-        if (!(key in window.Notification)) {
-          try { window.Notification[key] = OriginalNotification[key]; } catch(e) {}
-        }
-      });
-    })();
-  `;
-  win.webContents.executeJavaScript(script).catch(() => {});
 }
 
 // --- Settings Window ---
@@ -214,10 +209,10 @@ ipcMain.handle('add-account', (_, name, color) => {
 });
 
 ipcMain.handle('remove-account', (_, id) => {
-  // Close the window if open
+  // Force-destroy the window if it exists (bypass hide-on-close)
   if (teamsWindows.has(id)) {
     const win = teamsWindows.get(id);
-    if (!win.isDestroyed()) win.close();
+    if (!win.isDestroyed()) win.destroy();
     teamsWindows.delete(id);
   }
   const accounts = store.removeAccount(id);
@@ -242,15 +237,32 @@ ipcMain.handle('launch-account', (_, id) => {
 });
 
 // Notification forwarding from Teams windows
-ipcMain.on('teams-notification', (_, { title, body, accountId }) => {
-  const accounts = store.getAccounts();
-  const account = accounts.find(a => a.id === accountId);
-  const label = account ? account.name : 'Unknown';
+ipcMain.on('teams-notification', (event, { title, body }) => {
+  // Determine which account sent this by matching the sender's webContents
+  const senderContents = event.sender;
+  let accountName = 'Unknown';
+  let accountWindow = null;
+
+  for (const [id, win] of teamsWindows) {
+    if (!win.isDestroyed() && win.webContents.id === senderContents.id) {
+      accountName = win.accountName;
+      accountWindow = win;
+      break;
+    }
+  }
 
   const notification = new Notification({
-    title: `[${label}] ${title}`,
+    title: `[${accountName}] ${title}`,
     body: body || ''
   });
+
+  notification.on('click', () => {
+    if (accountWindow && !accountWindow.isDestroyed()) {
+      accountWindow.show();
+      accountWindow.focus();
+    }
+  });
+
   notification.show();
 });
 
@@ -270,7 +282,15 @@ app.whenReady().then(() => {
   tray.setToolTip('Teams Launcher');
   tray.setContextMenu(buildTrayMenu());
 
-  // On macOS, clicking the tray icon shows the context menu by default
+  // Trigger macOS notification permission on first launch
+  const accounts = store.getAccounts();
+  if (accounts.length === 0) {
+    const welcome = new Notification({
+      title: 'Teams Launcher is running',
+      body: 'Click the menu bar icon to add your Teams accounts.'
+    });
+    welcome.show();
+  }
 });
 
 app.on('before-quit', () => {
