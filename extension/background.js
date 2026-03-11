@@ -87,46 +87,20 @@ async function saveDomainMapping(domain, accountId) {
   }
 }
 
-// Intercept navigation to Microsoft 365 domains
-chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
-  // Only intercept top-level navigation
+// Track Microsoft 365 navigation — show badge so user can manually route if needed
+// Does NOT auto-redirect since links already open in Chrome from TeamsHub
+chrome.webNavigation.onCompleted.addListener(async (details) => {
   if (details.frameId !== 0) return;
 
   const domain = extractDomain(details.url);
   if (!domain || !isMicrosoftDomain(domain)) return;
 
-  // Check if TeamsHub is running
-  const running = await pingTeamsHub();
-  if (!running) {
-    // Store the pending URL and show notification
-    await chrome.storage.local.set({ pendingUrl: details.url });
-    chrome.action.setBadgeText({ text: '!' });
-    chrome.action.setBadgeBackgroundColor({ color: '#ff6b6b' });
-    return;
-  }
-
-  // Check for existing domain mapping
-  const accountId = await getDomainMapping(domain);
-
-  if (accountId) {
-    // Mapping exists — open directly in TeamsHub
-    const result = await openInAccount(details.url, accountId);
-    if (result.success) {
-      // Close the tab that was navigating
-      chrome.tabs.remove(details.tabId).catch(() => {});
-    }
-  } else {
-    // No mapping — store URL and open popup for user to pick account
-    await chrome.storage.local.set({
-      pendingUrl: details.url,
-      pendingDomain: domain,
-      pendingTabId: details.tabId,
-    });
-    // Open the popup programmatically isn't possible in MV3,
-    // so set badge to indicate action needed
-    chrome.action.setBadgeText({ text: '?' });
-    chrome.action.setBadgeBackgroundColor({ color: '#ff9f43' });
-  }
+  // Just store the URL info so the popup can offer routing if the user clicks it
+  await chrome.storage.local.set({
+    pendingUrl: details.url,
+    pendingDomain: domain,
+    pendingTabId: details.tabId,
+  });
 }, {
   url: MS_DOMAINS.map(d => ({ hostSuffix: d.startsWith('.') ? d.slice(1) : d })),
 });
