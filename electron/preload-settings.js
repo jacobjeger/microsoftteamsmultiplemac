@@ -7,7 +7,9 @@ contextBridge.exposeInMainWorld('api', {
   updateAccount: (id, data) => ipcRenderer.invoke('update-account', id, data),
   reorderAccounts: (ids) => ipcRenderer.invoke('reorder-accounts', ids),
   launchAccount: (id) => ipcRenderer.invoke('launch-account', id),
-  onAccountsChanged: (cb) => {
-    ipcRenderer.on('accounts-changed', (_, accounts) => cb(accounts));
-  }
+  launchAll: () => ipcRenderer.invoke('launch-all'),
+  getWindowStatus: (id) => ipcRenderer.invoke('get-window-status', id),
+  onAccountsChanged: (callback) => {
+    ipcRenderer.on('accounts-changed', (_, accounts) => callback(accounts));
+  },
 });

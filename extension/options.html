@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TeamsHub — Domain Mappings</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>TeamsHub Domain Mappings</h1>
+    <p class="subtitle">These mappings control which Microsoft 365 domains open in which TeamsHub account.</p>
+    <div id="status-bar" class="status-bar"></div>
+    <table id="mappings-table">
+      <thead>
+        <tr>
+          <th>Domain</th>
+          <th>Account</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="mappings-body"></tbody>
+    </table>
+    <div id="empty" class="empty" style="display:none">
+      No domain mappings yet. They will be created automatically when you first visit a Microsoft 365 site.
+    </div>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>

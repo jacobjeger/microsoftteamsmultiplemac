@@ -1,22 +1,31 @@
 {
-  "name": "teams-launcher",
+  "name": "teamshub",
   "version": "1.0.0",
-  "description": "Mac menu bar app for managing multiple Microsoft Teams accounts",
-  "main": "src/main.js",
+  "description": "Mac menu bar app for managing multiple Microsoft Teams accounts with Chrome extension",
+  "main": "electron/main.js",
   "scripts": {
+    "dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173/src/settings/index.html && electron .\"",
+    "build": "vite build && electron-builder",
     "start": "electron .",
     "dist": "electron-builder"
   },
   "dependencies": {
+    "electron-store": "^6.0.1",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "concurrently": "^8.2.2",
     "electron": "^30.0.0",
-    "electron-builder": "^24.13.0"
+    "electron-builder": "^24.13.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vite": "^5.4.2",
+    "wait-on": "^7.2.0"
   },
   "build": {
-    "appId": "com.teamslauncher.app",
-    "productName": "Teams Launcher",
+    "appId": "com.teamshub.app",
+    "productName": "TeamsHub",
     "mac": {
       "category": "public.app-category.productivity",
       "target": [
@@ -25,7 +34,15 @@
       ]
     },
     "files": [
-      "src/**/*"
+      "electron/**/*",
+      "dist/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "native-messaging/",
+        "to": "native-messaging/",
+        "filter": ["**/*"]
+      }
     ]
   }
 }

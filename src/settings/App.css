@@ -20,28 +20,27 @@ body {
   padding: 0 28px 28px;
 }
 
-h1 {
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.header h1 {
   font-size: 24px;
   font-weight: 700;
-  margin-bottom: 4px;
   letter-spacing: -0.3px;
 }
 
-.subtitle {
-  font-size: 13px;
-  color: #777;
-  margin-bottom: 20px;
-}
-
-/* Top Actions */
-.top-actions {
+.header-actions {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
+  -webkit-app-region: no-drag;
 }
 
 /* Account List */
-#account-list {
+.account-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -173,39 +172,6 @@ h1 {
   letter-spacing: -0.1px;
 }
 
-.btn-add {
-  flex: 1;
-  background: #2a2a2a;
-  border: 1px solid #333;
-  color: #ccc;
-}
-
-.btn-add:hover {
-  background: #333;
-  border-color: #444;
-  color: #e0e0e0;
-}
-
-.btn-launch-all {
-  flex: 1;
-  background: #1a4a28;
-  border: 1px solid #2a5a35;
-  color: #4ade80;
-  font-weight: 600;
-}
-
-.btn-launch-all:hover {
-  background: #1e5a2e;
-  border-color: #3a7a45;
-}
-
-.btn-launch-all:disabled {
-  background: #252525;
-  border-color: #333;
-  color: #555;
-  cursor: not-allowed;
-}
-
 .btn-primary {
   background: #4a9eff;
   color: #fff;
@@ -233,6 +199,11 @@ h1 {
   border-color: #444;
 }
 
+.btn-secondary:disabled {
+  color: #555;
+  cursor: not-allowed;
+}
+
 /* Modal */
 .modal-overlay {
   position: fixed;
@@ -246,10 +217,6 @@ h1 {
   align-items: center;
   justify-content: center;
   z-index: 100;
-}
-
-.modal-overlay.hidden {
-  display: none;
 }
 
 .modal {
@@ -269,21 +236,22 @@ h1 {
   letter-spacing: -0.2px;
 }
 
-.form-group {
-  margin-bottom: 18px;
-}
-
-.form-group label {
+.modal label {
   display: block;
   font-size: 11px;
   color: #777;
   margin-bottom: 8px;
+  margin-top: 18px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   font-weight: 500;
 }
 
-.form-group input {
+.modal label:first-of-type {
+  margin-top: 0;
+}
+
+.modal input[type="text"] {
   width: 100%;
   padding: 10px 14px;
   background: #1a1a1a;
@@ -295,7 +263,7 @@ h1 {
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.form-group input:focus {
+.modal input[type="text"]:focus {
   border-color: #4a9eff;
   box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.15);
 }
@@ -369,12 +337,12 @@ h1 {
   color: #ff6b6b;
 }
 
-.url-add-row {
+.url-add {
   display: flex;
   gap: 6px;
 }
 
-.url-add-row input {
+.url-add input {
   flex: 1;
   padding: 8px 10px;
   background: #1a1a1a;
@@ -386,11 +354,11 @@ h1 {
   font-family: -apple-system, BlinkMacSystemFont, monospace;
 }
 
-.url-add-row input:focus {
+.url-add input:focus {
   border-color: #4a9eff;
 }
 
-.btn-small {
+.url-add .btn {
   padding: 6px 12px;
   font-size: 12px;
   border-radius: 6px;

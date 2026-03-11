@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "TeamsHub",
+  "version": "1.0.0",
+  "description": "Route Microsoft 365 links to the right TeamsHub account automatically",
+  "permissions": [
+    "storage",
+    "nativeMessaging",
+    "webNavigation",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://*.sharepoint.com/*",
+    "*://*.onedrive.com/*",
+    "*://outlook.office.com/*",
+    "*://*.office.com/*",
+    "*://*.teams.microsoft.com/*",
+    "*://*.office365.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "TeamsHub"
+  },
+  "options_page": "options.html",
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

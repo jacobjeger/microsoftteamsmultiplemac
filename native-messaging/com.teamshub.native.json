@@ -1,0 +1,9 @@
+{
+  "name": "com.teamshub.native",
+  "description": "TeamsHub Native Messaging Host — routes Microsoft 365 links to the right account",
+  "path": "/usr/local/bin/teamshub-host",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://EXTENSION_ID_HERE/"
+  ]
+}
