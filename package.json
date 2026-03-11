@@ -30,8 +30,8 @@
     "productName": "TeamsHub",
     "mac": {
       "category": "public.app-category.productivity",
+      "identity": null,
       "target": [
-        "dmg",
         "dir"
       ]
     },
