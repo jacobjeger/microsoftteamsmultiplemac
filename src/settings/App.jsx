@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
 const COLORS = [
@@ -10,6 +10,20 @@ const COLORS = [
   { name: 'Teal', value: '#2dd4bf' },
   { name: 'Pink', value: '#f472b6' },
 ];
+
+const Logo = () => (
+  <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+    <rect width="28" height="28" rx="7" fill="url(#logoGrad)" />
+    <path d="M8 10h5v2H8v-2zm0 3h8v2H8v-2zm0 3h6v2H8v-2z" fill="rgba(255,255,255,0.9)" />
+    <rect x="17" y="9" width="3" height="10" rx="1.5" fill="rgba(255,255,255,0.5)" />
+    <defs>
+      <linearGradient id="logoGrad" x1="0" y1="0" x2="28" y2="28">
+        <stop stopColor="#6366f1" />
+        <stop offset="1" stopColor="#4a9eff" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
 
 export default function App() {
   const [accounts, setAccounts] = useState([]);
@@ -94,7 +108,6 @@ export default function App() {
     setAutoLaunchUrls(autoLaunchUrls.filter((_, i) => i !== index));
   };
 
-  // Drag and drop
   const handleDragStart = (id) => setDraggedId(id);
   const handleDragEnd = () => setDraggedId(null);
 
@@ -113,20 +126,39 @@ export default function App() {
   return (
     <div className="app">
       <div className="titlebar-drag" />
-      <div className="container">
-        <div className="header">
-          <h1>TeamsHub</h1>
-          <div className="header-actions">
-            <button className="btn btn-secondary" onClick={() => window.api.launchAll()} disabled={accounts.length === 0}>
-              Launch All
-            </button>
-            <button className="btn btn-primary" onClick={openAdd}>+ Add Account</button>
+
+      <div className="branded-header">
+        <div className="branded-header-left">
+          <Logo />
+          <div>
+            <h1>TeamsHub</h1>
+            <p className="tagline">Multi-account Teams for Mac</p>
           </div>
+        </div>
+        <div className="branded-header-right">
+          <span className="account-count">{accounts.length} account{accounts.length !== 1 ? 's' : ''}</span>
+        </div>
+      </div>
+
+      <div className="container">
+        <div className="toolbar">
+          <button className="btn btn-secondary" onClick={() => window.api.launchAll()} disabled={accounts.length === 0}>
+            <span className="btn-icon-inline">&#9654;</span> Launch All
+          </button>
+          <button className="btn btn-primary" onClick={openAdd}>
+            <span className="btn-icon-inline">+</span> Add Account
+          </button>
         </div>
 
         <div className="account-list">
           {accounts.length === 0 ? (
-            <div className="empty-state">No accounts yet. Click "+ Add Account" to get started.</div>
+            <div className="empty-state">
+              <div className="empty-icon">
+                <Logo />
+              </div>
+              <h3>No accounts yet</h3>
+              <p>Add your first Teams account to get started</p>
+            </div>
           ) : (
             accounts.map(account => (
               <AccountRow
@@ -148,70 +180,84 @@ export default function App() {
       {showModal && (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal()}>
           <div className="modal">
-            <h2>{editingAccount ? 'Edit Account' : 'Add Account'}</h2>
-
-            <label>Account Name</label>
-            <input
-              ref={nameInputRef}
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') save();
-                if (e.key === 'Escape') closeModal();
-              }}
-              placeholder="e.g. Acme Corp"
-            />
-
-            <label>Microsoft Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') save();
-                if (e.key === 'Escape') closeModal();
-              }}
-              placeholder="user@contoso.com"
-            />
-            <span className="field-hint">Used to auto-login when opening links in Chrome</span>
-
-            <label>Color</label>
-            <div className="color-picker">
-              {COLORS.map(c => (
-                <div
-                  key={c.value}
-                  className={`color-swatch ${c.value === color ? 'selected' : ''}`}
-                  style={{ background: c.value }}
-                  title={c.name}
-                  onClick={() => setColor(c.value)}
-                />
-              ))}
+            <div className="modal-header">
+              <h2>{editingAccount ? 'Edit Account' : 'New Account'}</h2>
+              <button className="modal-close" onClick={closeModal}>&times;</button>
             </div>
 
-            <label>Auto-launch URLs</label>
-            <div className="url-list">
-              {autoLaunchUrls.map((url, i) => (
-                <div key={i} className="url-chip">
-                  <span>{url}</span>
-                  <button onClick={() => removeUrl(i)}>x</button>
-                </div>
-              ))}
-            </div>
-            <div className="url-add">
+            <div className="form-group">
+              <label>Account Name</label>
               <input
+                ref={nameInputRef}
                 type="text"
-                value={newUrl}
-                onChange={(e) => setNewUrl(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addUrl())}
-                placeholder="https://contoso.sharepoint.com"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') save();
+                  if (e.key === 'Escape') closeModal();
+                }}
+                placeholder="e.g. Acme Corp"
               />
-              <button className="btn btn-secondary" onClick={addUrl}>Add</button>
+            </div>
+
+            <div className="form-group">
+              <label>Microsoft Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') save();
+                  if (e.key === 'Escape') closeModal();
+                }}
+                placeholder="user@contoso.com"
+              />
+              <span className="field-hint">Auto-selects this account when opening links in Chrome</span>
+            </div>
+
+            <div className="form-group">
+              <label>Color</label>
+              <div className="color-picker">
+                {COLORS.map(c => (
+                  <div
+                    key={c.value}
+                    className={`color-swatch ${c.value === color ? 'selected' : ''}`}
+                    style={{ background: c.value }}
+                    title={c.name}
+                    onClick={() => setColor(c.value)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Auto-launch URLs</label>
+              <div className="url-list">
+                {autoLaunchUrls.map((url, i) => (
+                  <div key={i} className="url-chip">
+                    <span className="url-chip-icon">&#128279;</span>
+                    <span className="url-chip-text">{url}</span>
+                    <button onClick={() => removeUrl(i)}>&times;</button>
+                  </div>
+                ))}
+              </div>
+              <div className="url-add">
+                <input
+                  type="text"
+                  value={newUrl}
+                  onChange={(e) => setNewUrl(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addUrl())}
+                  placeholder="https://contoso.sharepoint.com"
+                />
+                <button className="btn btn-secondary btn-sm" onClick={addUrl}>Add</button>
+              </div>
             </div>
 
             <div className="modal-actions">
               <button className="btn btn-secondary" onClick={closeModal}>Cancel</button>
-              <button className="btn btn-primary" onClick={save} disabled={!name.trim()}>Save</button>
+              <button className="btn btn-primary" onClick={save} disabled={!name.trim()}>
+                {editingAccount ? 'Save Changes' : 'Create Account'}
+              </button>
             </div>
           </div>
         </div>
@@ -235,11 +281,20 @@ function AccountRow({ account, isDragging, onDragStart, onDragEnd, onDrop, onLau
     >
       <span className="drag-handle">&#x2807;</span>
       <span className="color-dot" style={{ background: account.color }} />
-      <span className="account-name">{account.name}</span>
+      <div className="account-info">
+        <span className="account-name">{account.name}</span>
+        {account.email && <span className="account-email">{account.email}</span>}
+      </div>
       <div className="account-actions">
-        <button className="btn-icon btn-launch" title="Launch" onClick={onLaunch}>&#9654;</button>
-        <button className="btn-icon" title="Edit" onClick={onEdit}>&#9998;</button>
-        <button className="btn-icon btn-delete" title="Delete" onClick={onDelete}>&#10005;</button>
+        <button className="btn-action btn-launch" title="Launch" onClick={onLaunch}>
+          <span>&#9654;</span>
+        </button>
+        <button className="btn-action btn-edit" title="Edit" onClick={onEdit}>
+          <span>&#9998;</span>
+        </button>
+        <button className="btn-action btn-delete" title="Delete" onClick={onDelete}>
+          <span>&#10005;</span>
+        </button>
       </div>
     </div>
   );

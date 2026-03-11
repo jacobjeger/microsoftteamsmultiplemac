@@ -12,28 +12,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   chrome.runtime.sendMessage({ type: 'get-state' }, (state) => {
     if (!state) {
-      statusEl.textContent = 'Error communicating with extension';
+      statusEl.innerHTML = '<span class="status-dot"></span> Error';
       statusEl.className = 'status disconnected';
       return;
     }
 
     if (!state.running) {
-      statusEl.textContent = 'Disconnected';
+      statusEl.innerHTML = '<span class="status-dot"></span> Disconnected';
       statusEl.className = 'status disconnected';
       notRunningEl.style.display = 'block';
       return;
     }
 
-    statusEl.textContent = 'Connected';
+    statusEl.innerHTML = '<span class="status-dot"></span> Connected';
     statusEl.className = 'status connected';
 
     // Show current page account info
     if (state.currentAccount) {
       currentAccountEl.style.display = 'block';
       currentAccountEl.innerHTML = `
-        <span class="current-dot" style="background:${state.currentAccount.color}"></span>
-        <span>This page belongs to <strong>${state.currentAccount.accountName}</strong></span>
-        ${state.currentAccount.email ? `<span class="current-email">${state.currentAccount.email}</span>` : ''}
+        <div class="current-label">Current page</div>
+        <div class="current-info">
+          <span class="current-dot" style="background:${state.currentAccount.color}"></span>
+          <span class="current-name">${state.currentAccount.accountName}</span>
+        </div>
+        ${state.currentAccount.email ? `<div class="current-email">${state.currentAccount.email}</div>` : ''}
       `;
     }
 
@@ -45,16 +48,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Show accounts
     if (state.accounts.length === 0) {
-      accountsEl.innerHTML = '<p>No accounts configured in TeamsHub</p>';
+      accountsEl.innerHTML = '<p>No accounts configured</p>';
       return;
     }
 
-    // Only show account buttons if there's a pending domain to route
     if (state.pendingDomain) {
       for (const account of state.accounts) {
         const btn = document.createElement('button');
         btn.className = 'account-btn';
-        btn.innerHTML = `<span class="account-dot" style="background:${account.color}"></span>${account.name}${account.email ? ` <span class="account-email">(${account.email})</span>` : ''}`;
+        btn.innerHTML = `
+          <span class="account-dot" style="background:${account.color}"></span>
+          ${account.name}
+          ${account.email ? `<span class="account-email-small">${account.email}</span>` : ''}
+        `;
 
         btn.addEventListener('click', () => {
           chrome.runtime.sendMessage({
@@ -63,9 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             accountId: account.id,
             url: state.pendingUrl,
             tabId: state.pendingTabId,
-          }, () => {
-            window.close();
-          });
+          }, () => window.close());
         });
 
         accountsEl.appendChild(btn);

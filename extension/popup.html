@@ -6,71 +6,120 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #1a1a1a;
+      background: #111113;
       color: #e0e0e0;
       width: 320px;
       min-height: 100px;
+      -webkit-font-smoothing: antialiased;
     }
+
+    /* Header */
     .header {
-      padding: 16px;
-      border-bottom: 1px solid #333;
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
-    .header h1 {
-      font-size: 16px;
-      font-weight: 600;
+    .logo {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .header-text h1 {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      background: linear-gradient(135deg, #818cf8, #4a9eff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
     .status {
-      font-size: 12px;
-      color: #888;
-      margin-top: 4px;
+      font-size: 10px;
+      color: #555;
+      margin-top: 1px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #555;
+    }
+    .status.connected .status-dot { background: #4ade80; }
     .status.connected { color: #4ade80; }
+    .status.disconnected .status-dot { background: #ff6b6b; }
     .status.disconnected { color: #ff6b6b; }
+
+    /* Current Account */
     .current-account {
       display: none;
       padding: 12px 16px;
-      background: #1e2a1e;
-      border-bottom: 1px solid #333;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(74, 158, 255, 0.06));
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       font-size: 13px;
+    }
+    .current-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #555;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .current-info {
+      display: flex;
       align-items: center;
       gap: 8px;
     }
     .current-dot {
-      display: inline-block;
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      vertical-align: middle;
-      margin-right: 6px;
+      flex-shrink: 0;
+    }
+    .current-name {
+      font-weight: 600;
+      font-size: 13px;
     }
     .current-email {
-      display: block;
       font-size: 11px;
-      color: #888;
+      color: #666;
       margin-top: 2px;
-      margin-left: 16px;
+      margin-left: 18px;
     }
+
+    /* Pending */
     .pending {
       padding: 12px 16px;
-      background: #252525;
-      border-bottom: 1px solid #333;
+      background: rgba(255, 159, 67, 0.06);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       font-size: 12px;
       color: #aaa;
     }
     .pending strong { color: #ff9f43; }
-    .pending .domain { color: #4a9eff; font-family: monospace; }
+    .pending .domain {
+      color: #4a9eff;
+      font-family: 'SF Mono', SFMono-Regular, monospace;
+      font-size: 11px;
+    }
+
+    /* Accounts */
     .accounts {
-      padding: 8px;
+      padding: 6px;
     }
     .accounts p {
-      padding: 8px;
-      color: #666;
-      font-size: 13px;
+      padding: 10px;
+      color: #555;
+      font-size: 12px;
       text-align: center;
     }
     .accounts .hint {
-      color: #555;
       font-style: italic;
+      color: #444;
     }
     .account-btn {
       display: flex;
@@ -80,7 +129,7 @@
       padding: 10px 12px;
       background: none;
       border: 1px solid transparent;
-      border-radius: 8px;
+      border-radius: 10px;
       color: #e0e0e0;
       cursor: pointer;
       font-size: 13px;
@@ -88,8 +137,8 @@
       transition: all 0.15s;
     }
     .account-btn:hover {
-      background: #2a2a2a;
-      border-color: #3a3a3a;
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.08);
     }
     .account-dot {
       width: 10px;
@@ -97,62 +146,79 @@
       border-radius: 50%;
       flex-shrink: 0;
     }
-    .account-email {
-      color: #666;
+    .account-email-small {
+      color: #555;
       font-size: 11px;
+      margin-left: auto;
     }
+
+    /* Dismiss */
     .dismiss {
       display: block;
-      width: calc(100% - 16px);
-      margin: 4px 8px 8px;
+      width: calc(100% - 12px);
+      margin: 2px 6px 6px;
       padding: 8px;
-      background: #252525;
-      border: 1px solid #333;
-      border-radius: 6px;
-      color: #888;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      color: #555;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 11px;
       text-align: center;
+      transition: all 0.15s;
     }
     .dismiss:hover {
-      background: #2a2a2a;
-      color: #ccc;
+      background: rgba(255, 255, 255, 0.06);
+      color: #aaa;
     }
+
+    /* Not Running */
     .not-running {
-      padding: 24px 16px;
+      padding: 28px 16px;
       text-align: center;
-      color: #888;
+      color: #555;
     }
-    .not-running p { margin-bottom: 8px; }
+    .not-running p { margin-bottom: 6px; font-size: 12px; }
     .not-running strong { color: #ff6b6b; }
+
+    /* Footer */
     .footer {
-      padding: 8px 16px;
-      border-top: 1px solid #333;
+      padding: 10px 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
       text-align: center;
     }
     .footer a {
-      color: #4a9eff;
+      color: #666;
       text-decoration: none;
-      font-size: 12px;
+      font-size: 11px;
       cursor: pointer;
+      transition: color 0.15s;
     }
-    .footer a:hover { text-decoration: underline; }
+    .footer a:hover { color: #4a9eff; }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>TeamsHub</h1>
-    <div id="status" class="status">Checking...</div>
+    <svg class="logo" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="url(#g)"/>
+      <path d="M7 8.5h4v1.5H7V8.5zm0 2.5h7v1.5H7V11zm0 2.5h5v1.5H7v-1.5z" fill="rgba(255,255,255,0.9)"/>
+      <rect x="15" y="8" width="2.5" height="8" rx="1.25" fill="rgba(255,255,255,0.45)"/>
+      <defs><linearGradient id="g" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#4a9eff"/></linearGradient></defs>
+    </svg>
+    <div class="header-text">
+      <h1>TeamsHub</h1>
+      <div id="status" class="status"><span class="status-dot"></span> Checking...</div>
+    </div>
   </div>
   <div id="current-account" class="current-account"></div>
   <div id="pending-info" class="pending" style="display:none"></div>
   <div id="accounts" class="accounts"></div>
   <div id="not-running" class="not-running" style="display:none">
     <p><strong>TeamsHub is not running</strong></p>
-    <p>Please open TeamsHub to route Microsoft 365 links to the right account.</p>
+    <p>Open TeamsHub to route Microsoft 365 links to the right account.</p>
   </div>
   <div class="footer">
-    <a id="options-link">Manage domain mappings</a>
+    <a id="options-link">Domain Mappings</a>
   </div>
   <script src="popup.js"></script>
 </body>
