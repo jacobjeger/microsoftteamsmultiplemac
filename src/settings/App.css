@@ -251,6 +251,30 @@ body {
   margin-top: 0;
 }
 
+.field-hint {
+  display: block;
+  font-size: 11px;
+  color: #555;
+  margin-top: 4px;
+}
+
+.modal input[type="email"] {
+  width: 100%;
+  padding: 10px 14px;
+  background: #1a1a1a;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  color: #e0e0e0;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.modal input[type="email"]:focus {
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.15);
+}
+
 .modal input[type="text"] {
   width: 100%;
   padding: 10px 14px;

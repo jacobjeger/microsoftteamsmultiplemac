@@ -16,7 +16,10 @@
     "*://*.office.com/*",
     "*://*.teams.microsoft.com/*",
     "*://*.cloud.microsoft/*",
-    "*://*.office365.com/*"
+    "*://*.office365.com/*",
+    "*://login.microsoftonline.com/*",
+    "*://login.microsoft.com/*",
+    "*://login.live.com/*"
   ],
   "background": {
     "service_worker": "background.js"

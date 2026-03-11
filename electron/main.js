@@ -25,6 +25,9 @@ const isDev = !app.isPackaged;
 const VITE_DEV_SERVER = 'http://localhost:5173';
 const HTTP_PORT = parseInt(process.env.TEAMSHUB_PORT || '47847', 10);
 
+// Track recently opened URLs → accountId (for extension to query)
+const recentUrlAccounts = new Map(); // url → { accountId, email, accountName, color, timestamp }
+
 // Chrome user agent to avoid Teams blocking Electron's default UA
 const CHROME_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
@@ -199,6 +202,33 @@ function updateDockBadge() {
   app.dock.setBadge(total > 0 ? String(total) : '');
 }
 
+// --- URL-to-Account Tracking ---
+
+function trackUrlForAccount(url, account) {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+    recentUrlAccounts.set(hostname, {
+      accountId: account.id,
+      email: account.email || '',
+      accountName: account.name,
+      color: account.color,
+      timestamp: Date.now(),
+    });
+    // Also store domain mapping persistently
+    store.setDomainMapping(hostname, account.id);
+    // Clean up old entries (older than 1 hour)
+    const cutoff = Date.now() - 3600000;
+    for (const [key, val] of recentUrlAccounts) {
+      if (val.timestamp < cutoff) recentUrlAccounts.delete(key);
+    }
+  } catch {}
+}
+
+function openUrlForAccount(url, account) {
+  trackUrlForAccount(url, account);
+  shell.openExternal(url);
+}
+
 // --- URL Helpers ---
 
 function isMicrosoftUrl(url) {
@@ -327,21 +357,21 @@ function launchAccount(accountId) {
     callback(allowed);
   });
 
-  // Intercept new windows — open all links in default browser (Chrome)
+  // Intercept new windows — open in Chrome with account tracking
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (url && url !== 'about:blank' && url !== '') {
-      shell.openExternal(url);
+      openUrlForAccount(url, account);
       return { action: 'deny' };
     }
     return { action: 'allow', overrideBrowserWindowOptions: { show: false } };
   });
 
-  // Catch child windows (about:blank → navigate pattern) — open in default browser
+  // Catch child windows (about:blank → navigate pattern)
   win.webContents.on('did-create-window', (childWin) => {
     function redirectChild(url) {
       if (!url || url === 'about:blank' || url === '') return;
       if (!childWin.isDestroyed()) childWin.destroy();
-      shell.openExternal(url);
+      openUrlForAccount(url, account);
     }
 
     childWin.webContents.on('will-navigate', (e, url) => {
@@ -366,10 +396,10 @@ function launchAccount(accountId) {
 
   win.loadURL('https://teams.cloud.microsoft');
 
-  // Auto-launch configured URLs in default browser
+  // Auto-launch configured URLs
   if (account.autoLaunchUrls && account.autoLaunchUrls.length > 0) {
     for (const url of account.autoLaunchUrls) {
-      shell.openExternal(url);
+      openUrlForAccount(url, account);
     }
   }
 
@@ -594,6 +624,40 @@ function startHttpServer() {
           res.end(JSON.stringify({ error: err.message }));
         }
       });
+      return;
+    }
+
+    // Extension queries which account a domain belongs to
+    if (req.method === 'GET' && url.pathname === '/url-account') {
+      const domain = url.searchParams.get('domain');
+      if (domain) {
+        // Check recent URL tracking first, then persistent mappings
+        const recent = recentUrlAccounts.get(domain);
+        if (recent) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(recent));
+          return;
+        }
+        // Check persistent domain mapping
+        const mappings = store.getDomainMappings();
+        const accountId = mappings[domain];
+        if (accountId) {
+          const accounts = store.getAccounts();
+          const account = accounts.find(a => a.id === accountId);
+          if (account) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+              accountId: account.id,
+              email: account.email || '',
+              accountName: account.name,
+              color: account.color,
+            }));
+            return;
+          }
+        }
+      }
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'No account mapping found' }));
       return;
     }
 

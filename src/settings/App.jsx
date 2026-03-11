@@ -17,6 +17,7 @@ export default function App() {
   const [editingAccount, setEditingAccount] = useState(null);
   const [name, setName] = useState('');
   const [color, setColor] = useState(COLORS[0].value);
+  const [email, setEmail] = useState('');
   const [autoLaunchUrls, setAutoLaunchUrls] = useState([]);
   const [newUrl, setNewUrl] = useState('');
   const [draggedId, setDraggedId] = useState(null);
@@ -30,6 +31,7 @@ export default function App() {
   const openAdd = () => {
     setEditingAccount(null);
     setName('');
+    setEmail('');
     setColor(COLORS[0].value);
     setAutoLaunchUrls([]);
     setNewUrl('');
@@ -40,6 +42,7 @@ export default function App() {
   const openEdit = (account) => {
     setEditingAccount(account);
     setName(account.name);
+    setEmail(account.email || '');
     setColor(account.color);
     setAutoLaunchUrls(account.autoLaunchUrls || []);
     setNewUrl('');
@@ -55,13 +58,15 @@ export default function App() {
 
     if (editingAccount) {
       const updated = await window.api.updateAccount(editingAccount.id, {
-        name: trimmed, color, autoLaunchUrls,
+        name: trimmed, email: email.trim(), color, autoLaunchUrls,
       });
       setAccounts(updated);
     } else {
       const account = await window.api.addAccount(trimmed, color);
-      if (autoLaunchUrls.length > 0) {
-        const updated = await window.api.updateAccount(account.id, { autoLaunchUrls });
+      const updateData = { autoLaunchUrls };
+      if (email.trim()) updateData.email = email.trim();
+      if (autoLaunchUrls.length > 0 || email.trim()) {
+        const updated = await window.api.updateAccount(account.id, updateData);
         setAccounts(updated);
       } else {
         const all = await window.api.getAccounts();
@@ -157,6 +162,19 @@ export default function App() {
               }}
               placeholder="e.g. Acme Corp"
             />
+
+            <label>Microsoft Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') save();
+                if (e.key === 'Escape') closeModal();
+              }}
+              placeholder="user@contoso.com"
+            />
+            <span className="field-hint">Used to auto-login when opening links in Chrome</span>
 
             <label>Color</label>
             <div className="color-picker">
