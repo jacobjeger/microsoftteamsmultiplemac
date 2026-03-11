@@ -366,10 +366,10 @@ function launchAccount(accountId) {
 
   win.loadURL('https://teams.cloud.microsoft');
 
-  // Auto-launch configured URLs
+  // Auto-launch configured URLs in default browser
   if (account.autoLaunchUrls && account.autoLaunchUrls.length > 0) {
     for (const url of account.autoLaunchUrls) {
-      openInBrowser(url, account);
+      shell.openExternal(url);
     }
   }
 
@@ -534,14 +534,9 @@ ipcMain.handle('set-domain-mapping', (_, domain, accountId) => {
   store.setDomainMapping(domain, accountId);
 });
 
-// Open URL in specific account's browser
+// Open URL in default browser
 ipcMain.handle('open-url-in-account', (_, url, accountId) => {
-  const accounts = store.getAccounts();
-  const account = accounts.find(a => a.id === accountId);
-  if (account) {
-    launchAccount(accountId);
-    openInBrowser(url, account);
-  }
+  shell.openExternal(url);
 });
 
 // --- HTTP Server for Native Messaging / Extension ---
@@ -586,14 +581,13 @@ function startHttpServer() {
           const { url: targetUrl, accountId } = JSON.parse(body);
           const accounts = store.getAccounts();
           const account = accounts.find(a => a.id === accountId);
-          if (account) {
-            launchAccount(accountId);
-            openInBrowser(targetUrl, account);
+          if (targetUrl) {
+            shell.openExternal(targetUrl);
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success: true }));
           } else {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Account not found' }));
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'No URL provided' }));
           }
         } catch (err) {
           res.writeHead(400, { 'Content-Type': 'application/json' });

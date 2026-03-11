@@ -128,7 +128,7 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
     chrome.action.setBadgeBackgroundColor({ color: '#ff9f43' });
   }
 }, {
-  url: MS_DOMAINS.map(d => ({ hostSuffix: d.replace('.', '') })),
+  url: MS_DOMAINS.map(d => ({ hostSuffix: d.startsWith('.') ? d.slice(1) : d })),
 });
 
 // Listen for messages from popup
