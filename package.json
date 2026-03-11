@@ -5,7 +5,7 @@
   "main": "electron/main.js",
   "scripts": {
     "dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173/src/settings/index.html && electron .\"",
-    "build": "vite build && electron-builder --mac dmg dir",
+    "build": "vite build && electron-builder --mac dir",
     "build:ext": "cd extension && zip -r ../TeamsHub-Extension.zip . -x '.*'",
     "package": "npm run build && npm run build:ext",
     "start": "electron .",
