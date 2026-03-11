@@ -15,6 +15,7 @@
     "*://outlook.office.com/*",
     "*://*.office.com/*",
     "*://*.teams.microsoft.com/*",
+    "*://*.cloud.microsoft/*",
     "*://*.office365.com/*"
   ],
   "background": {

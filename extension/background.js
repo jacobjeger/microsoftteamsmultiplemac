@@ -10,6 +10,7 @@ const MS_DOMAINS = [
   '.office.com',
   '.office365.com',
   '.teams.microsoft.com',
+  '.cloud.microsoft',
 ];
 
 function isMicrosoftDomain(hostname) {

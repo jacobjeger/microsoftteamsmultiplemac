@@ -205,6 +205,7 @@ function isMicrosoftUrl(url) {
   try {
     const hostname = new URL(url).hostname.toLowerCase();
     return hostname.endsWith('.microsoft.com') ||
+           hostname.endsWith('.cloud.microsoft') ||
            hostname.endsWith('.microsoftonline.com') ||
            hostname.endsWith('.sharepoint.com') ||
            hostname.endsWith('.office.com') ||
@@ -326,29 +327,21 @@ function launchAccount(accountId) {
     callback(allowed);
   });
 
-  // Intercept new windows
+  // Intercept new windows — open all links in default browser (Chrome)
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (url && url !== 'about:blank' && url !== '') {
-      if (isMicrosoftUrl(url)) {
-        openInBrowser(url, account);
-      } else {
-        shell.openExternal(url);
-      }
+      shell.openExternal(url);
       return { action: 'deny' };
     }
     return { action: 'allow', overrideBrowserWindowOptions: { show: false } };
   });
 
-  // Catch child windows (about:blank → navigate pattern)
+  // Catch child windows (about:blank → navigate pattern) — open in default browser
   win.webContents.on('did-create-window', (childWin) => {
     function redirectChild(url) {
       if (!url || url === 'about:blank' || url === '') return;
       if (!childWin.isDestroyed()) childWin.destroy();
-      if (isMicrosoftUrl(url)) {
-        openInBrowser(url, account);
-      } else {
-        shell.openExternal(url);
-      }
+      shell.openExternal(url);
     }
 
     childWin.webContents.on('will-navigate', (e, url) => {
@@ -371,7 +364,7 @@ function launchAccount(accountId) {
     }, 2000);
   });
 
-  win.loadURL('https://teams.microsoft.com');
+  win.loadURL('https://teams.cloud.microsoft');
 
   // Auto-launch configured URLs
   if (account.autoLaunchUrls && account.autoLaunchUrls.length > 0) {
